@@ -15,7 +15,7 @@ bmpList = [("sprites/background.bmp", Nothing),
            ("sprites/invader.bmp", magenta), 
            ("sprites/playerBullet.bmp", black),
            ("sprites/invaderBullet.bmp", black),
-           ("sprites/powerUp.bmp", Nothing)]
+           ("sprites/powerUp.bmp", magenta)]
 
 textureBackgroundIndex :: Int
 textureBackgroundIndex = 0

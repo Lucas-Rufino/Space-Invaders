@@ -1,10 +1,12 @@
 module Main where
 
 import Graphics.Rendering.OpenGL (GLdouble)
+import Control.Concurrent.MVar
 import Graphics.UI.Fungen
 import Data.Foldable
 import Textures
 import Invaders
+import PowerUp
 import Player
 import Screen
 import Types
@@ -17,6 +19,7 @@ main = do
       playerBullet = objectGroup "playerBulletGroup" []
       invaders = objectGroup "invadersGroup" [createInvader (fromIntegral (i) :: Double) | i <- [1..5]]
       invadersBullet = objectGroup "invadersBulletGroup" []
+      powerUps = objectGroup "powerUpGroup" [createPowerUp 170 450]
       scoring = Score 0
       input = [
         (SpecialKey KeyRight, StillDown, moveRightPlayer),
@@ -25,7 +28,7 @@ main = do
         (SpecialKey KeyUp, StillDown, moveUpPlayer),
         (Char ' ', Press, shootPlayer),
         (Char 'q', Press, \_ _ -> funExit)]
-  funInit winConfig gameMap [player, invaders, playerBullet, invadersBullet] () scoring input gameCycle (Timer 40) bmpList
+  funInit winConfig gameMap [player, invaders, playerBullet, invadersBullet, powerUps] () scoring input gameCycle (Timer 40) bmpList
 
 gameCycle :: SIAction ()
 gameCycle = do
@@ -42,11 +45,12 @@ gameCycle = do
       let aux = (fromIntegral n :: Double)/100.0
       setObjectSpeed (8.0,-0.2-(aux/2.0)) invader
     drawAllObjects
-    
+
   invaders <- getObjectsFromGroup "invadersGroup"
   spaceShipBullets <- getObjectsFromGroup "playerBulletGroup"
   invaderBullets <- getObjectsFromGroup "invadersBulletGroup"
   player <- findObject "player" "playerGroup"
+  powerUp <- findObject "powerUp" "powerUpGroup"
 
   shootInvaders
   forM_ invaders $ \invader -> do
@@ -71,3 +75,13 @@ gameCycle = do
       when invadersCrash $ do
         (reverseXSpeed invader1)
         (reverseXSpeed invader2)
+  
+  powerUpHit <- objectsCollision powerUp player
+  when powerUpHit $ do
+    setGameAttribute (Score (n+100))
+    setObjectAsleep True powerUp
+    destroyObjects [powerUp]
+    x <- randomDouble ( 20, 325)
+    y <- randomDouble (200, 450)
+    addObjectsToGroup [createPowerUp (convertGL x) (convertGL y)] "powerUpGroup"
+    drawAllObjects
