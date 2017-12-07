@@ -14,12 +14,12 @@ import Types
 createInvader :: GLdouble -> SIObject
 createInvader x = do
   let sprite = Tex textureInvaderSize textureInvaderIndex
-  object "invader" sprite False ((x * 64), heightGL - 20) (8.0, (-0.2)) ()
+  object "invader" sprite False ((x * 64), heightGL - 25) (8.0, (-0.2)) ()
 
 createInvaderBullet :: GLdouble -> GLdouble -> SIObject
 createInvaderBullet x y = do
   let sprite = Tex textureInvaderBulletSize textureInvaderBulletIndex
-  object "invaderBullet" sprite False (x, y) (0,-10) ()
+  object "invaderBullet" sprite False (x, y) (0, -10) ()
 
 shootInvaders :: SIAction ()
 shootInvaders = do

@@ -27,22 +27,11 @@ main = do
         (Char 'q', Press, \_ _ -> funExit)]
   funInit winConfig gameMap [player, invaders, playerBullet, invadersBullet] () scoring input gameCycle (Timer 40) bmpList
 
-endGame :: SIAction ()
-endGame = do
-  setGameAttribute (Score 0)
-  invaders <- getObjectsFromGroup "invadersGroup"
-  playerBullet <- getObjectsFromGroup "playerBulletGroup"
-  invadersBullet <- getObjectsFromGroup "invadersBulletGroup"
-  destroyObjects invaders
-  destroyObjects playerBullet
-  destroyObjects invadersBullet
-  addObjectsToGroup [createInvader (fromIntegral (i) :: Double) | i <- [1..5]] "invadersGroup"
-
 gameCycle :: SIAction ()
 gameCycle = do
   (Score n) <- getGameAttribute
-  printOnScreen (show("Score ") ++ show n) TimesRoman24 (0,0) 1.0 1.0 1.0
-  printOnScreen (show("Level ") ++ show ((fromIntegral n :: Double)/100)) TimesRoman24 (0,heightGL-20.0) 0.0 1.0 0.0
+  printOnScreen ("Score: " ++ show n) TimesRoman24 (10, 10) 1.0 1.0 1.0
+  printOnScreen ("Level: " ++ show (n `div` 100)) TimesRoman24 (widthGL-100, 10) 1.0 1.0 1.0
 
   when ((n`mod`100)==0 && n>0) $ do
     invaders <- getObjectsFromGroup "invadersGroup"
@@ -53,11 +42,11 @@ gameCycle = do
       let aux = (fromIntegral n :: Double)/100.0
       setObjectSpeed (8.0,-0.2-(aux/2.0)) invader
     drawAllObjects
-
+    
   invaders <- getObjectsFromGroup "invadersGroup"
   spaceShipBullets <- getObjectsFromGroup "playerBulletGroup"
   invaderBullets <- getObjectsFromGroup "invadersBulletGroup"
-  spaceShip <- findObject "player" "playerGroup"
+  player <- findObject "player" "playerGroup"
 
   shootInvaders
   forM_ invaders $ \invader -> do
@@ -65,15 +54,16 @@ gameCycle = do
     wallHit2 <- objectRightMapCollision invader
     when (wallHit1 || wallHit2) (reverseXSpeed invader)
     invassionSuccess <- objectBottomMapCollision invader
-    crash <- objectsCollision invader spaceShip
-    when (invassionSuccess || crash) $ endGame
+    crash <- objectsCollision invader player
+    when (invassionSuccess || crash) $ funExit
     forM_ invaderBullets $ \b -> do
-      spaceShipHit <- objectsCollision spaceShip b
-      when spaceShipHit $ endGame
+      spaceShipHit <- objectsCollision player b
+      when spaceShipHit $ funExit
     forM_ spaceShipBullets $ \b -> do
       invaderHit <- objectsCollision invader b
       when invaderHit $ do
         setObjectAsleep True invader
+        setObjectAsleep True b
         setGameAttribute (Score (n+20))
   forM_ invaders $ \invader1 -> do
     forM_ invaders $ \invader2 -> do
@@ -81,5 +71,3 @@ gameCycle = do
       when invadersCrash $ do
         (reverseXSpeed invader1)
         (reverseXSpeed invader2)
-
-  showFPS TimesRoman24 (widthGL-40,0) 1.0 0.0 0.0
